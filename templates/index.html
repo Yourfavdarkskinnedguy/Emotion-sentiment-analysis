@@ -1,0 +1,15 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Emotion Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Live Emotion Detection</h1>
+    <div class="camera-container">
+        <img src="{{ url_for('video_feed') }}" id="video">
+    </div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+/* static/style.css */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    color: #333;
+}
+
+.camera-container {
+    margin-top: 30px;
+}
+
+#video {
+    border: 5px solid #333;
+    border-radius: 10px;
+    width: 640px;
+    height: 480px;
+}
