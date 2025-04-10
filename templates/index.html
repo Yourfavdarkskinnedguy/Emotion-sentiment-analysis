@@ -3,7 +3,7 @@
 <head>
     <title>Live Emotion Detection</title>
     <style>
-        #videoElement {
+        #videoOutput {
             border: 2px solid black;
             width: 640px;
             height: 480px;
@@ -12,23 +12,6 @@
 </head>
 <body>
     <h1>Live Emotion Detection</h1>
-    <video autoplay="true" id="videoElement"></video>
-
-    <script>
-        const video = document.getElementById("videoElement");
-
-        // Check if browser supports getUserMedia
-        if (navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
-                video.srcObject = stream;
-            })
-            .catch(function(error) {
-                console.log("Something went wrong accessing the webcam:", error);
-            });
-        } else {
-            alert("Sorry, your browser does not support camera access.");
-        }
-    </script>
+    <img src="{{ url_for('video_feed') }}" id="videoOutput" alt="Live video feed not available" />
 </body>
 </html>

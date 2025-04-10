@@ -17,6 +17,7 @@ def load_model_and_predict(frame):
         roi = roi.reshape(1, 48, 48, 1)
 
         prediction = model.predict(roi)
+        print(prediction)
         emotion = labels[np.argmax(prediction)]
 
         cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)

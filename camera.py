@@ -1,7 +1,4 @@
-# camera.py
 import cv2
-import numpy as np
-from your_model import load_model_and_predict  # Replace with your actual method
 
 class VideoCamera:
     def __init__(self):
@@ -15,8 +12,9 @@ class VideoCamera:
         if not success:
             return None
 
-        # Make prediction and draw box
-        frame, prediction = load_model_and_predict(frame)
+        emotion = ""
+        cv2.putText(frame, emotion, (50, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         ret, jpeg = cv2.imencode('.jpg', frame)
         return jpeg.tobytes()
