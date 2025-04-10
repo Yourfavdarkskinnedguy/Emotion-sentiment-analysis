@@ -1,17 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Emotion Detection</title>
-    <style>
-        #videoOutput {
-            border: 2px solid black;
-            width: 640px;
-            height: 480px;
-        }
-    </style>
+  <title>Live Emotion Detection</title>
+  <style>
+    video, canvas {
+      width: 640px;
+      height: 480px;
+      border: 2px solid black;
+    }
+    #emotionLabel {
+      font-size: 24px;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Live Emotion Detection</h1>
-    <img src="{{ url_for('video_feed') }}" id="videoOutput" alt="Live video feed not available" />
+  <h1>Live Emotion Detection</h1>
+  <video id="video" autoplay></video>
+  <canvas id="canvas" hidden></canvas>
+  <div id="emotionLabel">Detecting...</div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const emotionLabel = document.getElementById('emotionLabel');
+    const ctx = canvas.getContext('2d');
+
+    // Start webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+        detectLoop();
+      })
+      .catch((err) => {
+        console.error("Webcam error:", err);
+      });
+
+    // Send a frame every 2 seconds
+    async function detectLoop() {
+      setInterval(async () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageBlob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, 'image/jpeg')
+        );
+
+        const formData = new FormData();
+        formData.append('frame', imageBlob, 'frame.jpg');
+
+        const response = await fetch('/predict', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+        emotionLabel.innerText = result.emotion || "No face detected";
+      }, 2000);
+    }
+  </script>
 </body>
 </html>

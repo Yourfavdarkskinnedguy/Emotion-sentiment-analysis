@@ -1,24 +1,36 @@
-# app.py
-from flask import Flask, render_template, Response
-from camera import VideoCamera
+from flask import Flask, render_template, request, jsonify
+import cv2
+import numpy as np
+from PIL import Image
+import os
+from ultralytics import YOLO
 
+model_filepath= os.path.join(os.getcwd(), "model", "best.pt")
+print(f"model file path is {model_filepath}")
+
+model= YOLO(model_filepath)
 app = Flask(__name__)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-def gen(camera):
-    while True:
-        frame = camera.get_frame()
-        if frame:
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+@app.route('/predict', methods=['POST'])
+def predict():
+    file = request.files['frame']
+    image = Image.open(file.stream).convert('RGB')
+    img_array = np.array(image)
 
-@app.route('/video_feed')
-def video_feed():
-    return Response(gen(VideoCamera()),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
-if __name__ == "__main__":
+    results = model(img_bgr)[0]  # Get first result
+
+    if not results.boxes:
+        return jsonify({'emotion': None})
+
+    pred = results.names[int(results.boxes.cls[0])]
+    return jsonify({'emotion': pred})
+
+
+if __name__ == '__main__':
     app.run(debug=True)
