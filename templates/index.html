@@ -3,50 +3,53 @@
 <head>
   <title>Live Emotion Detection</title>
   <style>
-    video, canvas {
+    #wrapper {
+      position: relative;
       width: 640px;
       height: 480px;
-      border: 2px solid black;
     }
-    #emotionLabel {
-      font-size: 24px;
-      margin-top: 10px;
+    video, canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 640px;
+      height: 480px;
     }
   </style>
 </head>
 <body>
   <h1>Live Emotion Detection</h1>
-  <video id="video" autoplay></video>
-  <canvas id="canvas" hidden></canvas>
-  <div id="emotionLabel">Detecting...</div>
+  <div id="wrapper">
+    <video id="video" autoplay muted></video>
+    <canvas id="overlay"></canvas>
+  </div>
 
   <script>
     const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const emotionLabel = document.getElementById('emotionLabel');
+    const canvas = document.getElementById('overlay');
     const ctx = canvas.getContext('2d');
 
-    // Start webcam
     navigator.mediaDevices.getUserMedia({ video: true })
-      .then((stream) => {
+      .then(stream => {
         video.srcObject = stream;
-        detectLoop();
+        video.onloadedmetadata = () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          detectLoop();
+        };
       })
-      .catch((err) => {
-        console.error("Webcam error:", err);
-      });
+      .catch(error => console.error("Webcam error:", error));
 
-    // Send a frame every 2 seconds
     async function detectLoop() {
+      const hiddenCanvas = document.createElement('canvas');
+      const hiddenCtx = hiddenCanvas.getContext('2d');
+
       setInterval(async () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        hiddenCanvas.width = video.videoWidth;
+        hiddenCanvas.height = video.videoHeight;
+        hiddenCtx.drawImage(video, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
 
-        const imageBlob = await new Promise((resolve) =>
-          canvas.toBlob(resolve, 'image/jpeg')
-        );
-
+        const imageBlob = await new Promise(resolve => hiddenCanvas.toBlob(resolve, 'image/jpeg'));
         const formData = new FormData();
         formData.append('frame', imageBlob, 'frame.jpg');
 
@@ -56,8 +59,18 @@
         });
 
         const result = await response.json();
-        emotionLabel.innerText = result.emotion || "No face detected";
-      }, 2000);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const det of result.detections) {
+          ctx.strokeStyle = 'lime';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(det.x1, det.y1, det.x2 - det.x1, det.y2 - det.y1);
+
+          ctx.fillStyle = 'lime';
+          ctx.font = '16px Arial';
+          ctx.fillText(det.label, det.x1, det.y1 - 5);
+        }
+      }, 1500); 
     }
   </script>
 </body>
